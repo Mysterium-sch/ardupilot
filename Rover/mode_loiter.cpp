@@ -27,7 +27,7 @@ void ModeLoiter::update()
 
     if (_distance_to_destination <= loiter_radius) {
         moving = false;
-        _desired_speed = 0;
+        _desired_speed = 0.0f;
     }
     // if within two times the loiter radius slew desired speed towards zero and use existing desired heading
     } else if (_distance_to_destination <= 2*(loiter_radius) && !(_distance_to_destination <= loiter_radius) && !(moving)) {
