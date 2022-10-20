@@ -66,7 +66,9 @@ void Plane::init_ardupilot()
 
     rssi.init();
 
+#if AP_RPM_ENABLED
     rpm_sensor.init();
+#endif
 
     // setup telem slots with serial ports
     gcs().setup_uarts();
@@ -144,7 +146,7 @@ void Plane::init_ardupilot()
 #endif
 
 // init cargo gripper
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     g2.gripper.init();
 #endif
 }

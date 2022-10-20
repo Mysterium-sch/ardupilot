@@ -3642,6 +3642,48 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
                 if delta < max_delta:
                     self.progress("Reached destination")
 
+    def drive_to_location(self, loc, tolerance=1, timeout=30, target_system=1, target_component=1):
+        self.assert_mode('GUIDED')
+
+        type_mask = (mavutil.mavlink.POSITION_TARGET_TYPEMASK_VX_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_VY_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_VZ_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_AX_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_AY_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_AZ_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_YAW_IGNORE +
+                     mavutil.mavlink.POSITION_TARGET_TYPEMASK_YAW_RATE_IGNORE)
+
+        last_sent = 0
+        tstart = self.get_sim_time()
+        while True:
+            now = self.get_sim_time_cached()
+            if now - tstart > timeout:
+                raise NotAchievedException("Did not get to location")
+            if now - last_sent > 10:
+                last_sent = now
+                self.mav.mav.set_position_target_global_int_send(
+                    0,
+                    target_system,
+                    target_component,
+                    mavutil.mavlink.MAV_FRAME_GLOBAL_INT,
+                    type_mask,
+                    int(loc.lat * 1.0e7),
+                    int(loc.lng * 1.0e7),
+                    0, # alt
+                    0, # x-ve
+                    0, # y-vel
+                    0, # z-vel
+                    0, # afx
+                    0, # afy
+                    0, # afz
+                    0, # yaw,
+                    0, # yaw-rate
+                )
+            if self.get_distance(self.mav.location(), loc) > tolerance:
+                continue
+            return
+
     def drive_somewhere_breach_boundary_and_rtl(self, loc, target_system=1, target_component=1, timeout=60):
         tstart = self.get_sim_time()
         last_sent = 0
@@ -5890,6 +5932,7 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
             "RNGFND1_TYPE" : 17,     # NMEA must attach uart to SITL
             "RNGFND1_ORIENT" : 25,   # Set to downward facing
             "SERIAL7_PROTOCOL" : 9,  # Rangefinder on uartH
+            "SERIAL7_BAUD" : 9600,   # Rangefinder specific baudrate
 
             "RNGFND3_TYPE" : 2,      # MaxbotixI2C
             "RNGFND3_ADDR" : 112,    # 0x70 address from SIM_I2C.cpp
@@ -6007,8 +6050,7 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
         })
 
         start = self.mav.location()
-        target = start
-        (target.lat, target.lng) = mavextra.gps_offset(start.lat, start.lng, 4, -4)
+        target = self.offset_location_ne(start, 50, 0)
         self.progress("Setting target to %f %f" % (start.lat, start.lng))
         stopping_dist = 0.5
 
@@ -6030,20 +6072,19 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
             try:
                 self.set_parameter("SIM_PLD_TYPE", type)
                 self.reboot_sitl()
+                self.change_mode('GUIDED')
                 self.wait_ready_to_arm()
                 self.arm_vehicle()
-                self.reach_heading_manual(0)
-                self.set_rc(3, 1400)
-                self.wait_distance(25)
-                self.set_rc_default()
+                initial_position = self.offset_location_ne(target, -20, -2)
+                self.drive_to_location(initial_position)
                 self.change_mode(8) # DOCK mode
-                self.wait_groundspeed(0, 0.03, timeout=120)
+                max_delta = 1
+                self.wait_distance_to_location(target, 0, max_delta, timeout=180)
                 self.disarm_vehicle()
                 self.assert_receive_message('GLOBAL_POSITION_INT')
                 new_pos = self.mav.location()
                 delta = abs(self.get_distance(target, new_pos) - stopping_dist)
                 self.progress("Docked %f metres from stopping point" % delta)
-                max_delta = 0.5
                 if delta > max_delta:
                     raise NotAchievedException("Did not dock close enough to stopping point (%fm > %fm" % (delta, max_delta))
 
@@ -6054,12 +6095,14 @@ Brakes have negligible effect (with=%0.2fm without=%0.2fm delta=%0.2fm)
                 self.print_exception_caught(e)
                 ex = e
                 break
+
         self.context_pop()
-        self.reboot_sitl()
-        self.progress("All done")
 
         if ex is not None:
             raise ex
+
+        self.reboot_sitl()
+        self.progress("All done")
 
     def tests(self):
         '''return list of all tests'''

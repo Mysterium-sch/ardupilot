@@ -88,14 +88,16 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
     SCHED_TASK(one_second_loop,         1,    400,  90),
     SCHED_TASK(three_hz_loop,           3,     75,  93),
     SCHED_TASK(check_long_failsafe,     3,    400,  96),
+#if AP_RPM_ENABLED
     SCHED_TASK_CLASS(AP_RPM,           &plane.rpm_sensor,     update,     10, 100,  99),
+#endif
 #if AP_AIRSPEED_AUTOCAL_ENABLE
     SCHED_TASK(airspeed_ratio_update,   1,    100,  102),
 #endif // AP_AIRSPEED_AUTOCAL_ENABLE
 #if HAL_MOUNT_ENABLED
     SCHED_TASK_CLASS(AP_Mount, &plane.camera_mount, update, 50, 100, 105),
 #endif // HAL_MOUNT_ENABLED
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     SCHED_TASK_CLASS(AP_Camera, &plane.camera, update,      50, 100, 108),
 #endif // CAMERA == ENABLED
     SCHED_TASK_CLASS(AP_Scheduler, &plane.scheduler, update_logging,         0.2,    100, 111),
@@ -125,7 +127,7 @@ const AP_Scheduler::Task Plane::scheduler_tasks[] = {
 #if STATS_ENABLED == ENABLED
     SCHED_TASK_CLASS(AP_Stats, &plane.g2.stats, update, 1, 100, 153),
 #endif
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     SCHED_TASK_CLASS(AP_Gripper, &plane.g2.gripper, update, 10, 75, 156),
 #endif
 #if LANDING_GEAR_ENABLED == ENABLED
@@ -547,16 +549,16 @@ void Plane::update_alt()
             distance_beyond_land_wp = current_loc.get_distance(next_WP_loc);
         }
 
-        float target_alt = relative_target_altitude_cm();
+        tecs_target_alt_cm = relative_target_altitude_cm();
 
         if (control_mode == &mode_rtl && !rtl.done_climb && (g2.rtl_climb_min > 0 || (plane.g2.flight_options & FlightOptions::CLIMB_BEFORE_TURN))) {
             // ensure we do the initial climb in RTL. We add an extra
             // 10m in the demanded height to push TECS to climb
             // quickly
-            target_alt = MAX(target_alt, prev_WP_loc.alt - home.alt) + (g2.rtl_climb_min+10)*100;
+            tecs_target_alt_cm = MAX(tecs_target_alt_cm, prev_WP_loc.alt - home.alt) + (g2.rtl_climb_min+10)*100;
         }
 
-        TECS_controller.update_pitch_throttle(target_alt,
+        TECS_controller.update_pitch_throttle(tecs_target_alt_cm,
                                                  target_airspeed_cm,
                                                  flight_stage,
                                                  distance_beyond_land_wp,
@@ -796,26 +798,21 @@ bool Plane::set_velocity_match(const Vector2f &velocity)
 
 #endif // AP_SCRIPTING_ENABLED
 
-#if OSD_ENABLED
 // correct AHRS pitch for TRIM_PITCH_CD in non-VTOL modes, and return VTOL view in VTOL
 void Plane::get_osd_roll_pitch_rad(float &roll, float &pitch) const
 {
-   pitch = ahrs.pitch;
-   roll = ahrs.roll;
 #if HAL_QUADPLANE_ENABLED
-   if (quadplane.show_vtol_view()) {
-       return;
-   }
+    if (quadplane.show_vtol_view()) {
+        pitch = quadplane.ahrs_view->pitch;
+        roll = quadplane.ahrs_view->roll;
+        return;
+    }
 #endif
-   if (!(g2.flight_options & FlightOptions::OSD_REMOVE_TRIM_PITCH_CD)) {  // correct for TRIM_PITCH_CD
-      pitch -= g.pitch_trim_cd * 0.01 * DEG_TO_RAD;
-      return;
-   }
-#if HAL_QUADPLANE_ENABLED
-   pitch = quadplane.ahrs_view->pitch;
-   roll = quadplane.ahrs_view->roll;
-#endif
+    pitch = ahrs.pitch;
+    roll = ahrs.roll;
+    if (!(g2.flight_options & FlightOptions::OSD_REMOVE_TRIM_PITCH_CD)) {  // correct for TRIM_PITCH_CD
+        pitch -= g.pitch_trim_cd * 0.01 * DEG_TO_RAD;
+    }
 }
-#endif
 
 AP_HAL_MAIN_CALLBACKS(&plane);

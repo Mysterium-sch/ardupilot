@@ -409,7 +409,7 @@ const AP_Param::Info Sub::var_info[] = {
 
     // variables not in the g class which contain EEPROM saved variables
 
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     // @Group: CAM_
     // @Path: ../libraries/AP_Camera/AP_Camera.cpp
     GOBJECT(camera,           "CAM_", AP_Camera),
@@ -549,7 +549,7 @@ const AP_Param::Info Sub::var_info[] = {
     GOBJECT(avoid,      "AVOID_",   AC_Avoid),
 #endif
 
-#if AC_RALLY == ENABLED
+#if HAL_RALLY_ENABLED
     // @Group: RALLY_
     // @Path: ../libraries/AP_Rally/AP_Rally.cpp
     GOBJECT(rally,      "RALLY_",   AP_Rally),
@@ -599,7 +599,7 @@ const AP_Param::Info Sub::var_info[] = {
     GOBJECT(optflow,   "FLOW", AP_OpticalFlow),
 #endif
 
-#if RPM_ENABLED == ENABLED
+#if AP_RPM_ENABLED
     // @Group: RPM
     // @Path: ../libraries/AP_RPM/AP_RPM.cpp
     GOBJECT(rpm_sensor, "RPM", AP_RPM),
@@ -631,7 +631,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_SUBGROUPINFO(proximity, "PRX", 2, ParametersG2, AP_Proximity),
 #endif
 
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     // @Group: GRIP_
     // @Path: ../libraries/AP_Gripper/AP_Gripper.cpp
     AP_SUBGROUPINFO(gripper, "GRIP_", 3, ParametersG2, AP_Gripper),
