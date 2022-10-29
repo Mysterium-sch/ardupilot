@@ -1,5 +1,5 @@
 #include "Rover.h"
-
+bool moving = false;
 bool ModeLoiter::_enter()
 {
     // set _destination to reasonable stopping point
@@ -25,8 +25,16 @@ void ModeLoiter::update()
 
     const float loiter_radius = rover.g2.sailboat.tack_enabled() ? g2.sailboat.get_loiter_radius() : g2.loit_radius;
 
-    // if within loiter radius slew desired speed towards zero and use existing desired heading
     if (_distance_to_destination <= loiter_radius) {
+        if(moving && _distance_to_destination <= 0.75*loiter_radius) {
+            moving = false;
+            _desired_speed = 0.0f;
+        } else if (!moving) {
+            _desired_speed = 0.0f;
+        }
+    }
+    // if within loiter radius slew desired speed towards zero and use existing desired heading
+    else if (_distance_to_destination <= 1.2*(loiter_radius) && !(_distance_to_destination <= loiter_radius) && !(moving)) {
         // sailboats should not stop unless motoring
         const float desired_speed_within_radius = rover.g2.sailboat.tack_enabled() ? 0.1f : 0.0f;
         _desired_speed = attitude_control.get_desired_speed_accel_limited(desired_speed_within_radius, rover.G_Dt);
@@ -36,8 +44,9 @@ void ModeLoiter::update()
             _desired_yaw_cd = degrees(g2.windvane.get_true_wind_direction_rad()) * 100.0f;
         }
     } else {
+        moving = true;
         // P controller with hard-coded gain to convert distance to desired speed
-        _desired_speed = MIN((_distance_to_destination - loiter_radius) * g2.loiter_speed_gain, g2.wp_nav.get_default_speed());
+        _desired_speed = MIN(_distance_to_destination * g2.loiter_speed_gain, g2.wp_nav.get_default_speed());
 
         // calculate bearing to destination
         _desired_yaw_cd = rover.current_loc.get_bearing_to(_destination);
