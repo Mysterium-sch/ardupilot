@@ -203,7 +203,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if HAL_MOUNT_ENABLED
     SCHED_TASK_CLASS(AP_Mount,             &copter.camera_mount,        update,          50,  75, 108),
 #endif
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     SCHED_TASK_CLASS(AP_Camera,            &copter.camera,              update,          50,  75, 111),
 #endif
 #if LOGGING_ENABLED == ENABLED
@@ -214,7 +214,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK_CLASS(AP_InertialSensor,    &copter.ins,                 periodic,       400,  50, 123),
 
     SCHED_TASK_CLASS(AP_Scheduler,         &copter.scheduler,           update_logging, 0.1,  75, 126),
-#if RPM_ENABLED == ENABLED
+#if AP_RPM_ENABLED
     SCHED_TASK_CLASS(AP_RPM,               &copter.rpm_sensor,          update,          40, 200, 129),
 #endif
     SCHED_TASK_CLASS(AP_TempCalibration,   &copter.g2.temp_calibration, update,          10, 100, 135),
@@ -227,7 +227,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #if AP_TERRAIN_AVAILABLE
     SCHED_TASK(terrain_update,        10,    100, 144),
 #endif
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     SCHED_TASK_CLASS(AP_Gripper,           &copter.g2.gripper,          update,          10,  75, 147),
 #endif
 #if WINCH_ENABLED == ENABLED

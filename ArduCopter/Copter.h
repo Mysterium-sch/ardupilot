@@ -109,7 +109,8 @@
  #include <AC_WPNav/AC_WPNav_OA.h>
  #include <AC_Avoidance/AP_OAPathPlanner.h>
 #endif
-#if GRIPPER_ENABLED == ENABLED
+#include <AP_Gripper/AP_Gripper_config.h>
+#if AP_GRIPPER_ENABLED
  # include <AP_Gripper/AP_Gripper.h>
 #endif
 #if PRECISION_LANDING == ENABLED
@@ -129,9 +130,8 @@
 
 #include <AP_Mount/AP_Mount.h>
 
-#if CAMERA == ENABLED
- # include <AP_Camera/AP_Camera.h>
-#endif
+#include <AP_Camera/AP_Camera.h>
+
 #if HAL_BUTTON_ENABLED
  # include <AP_Button/AP_Button.h>
 #endif
@@ -149,9 +149,7 @@
 #if WINCH_ENABLED == ENABLED
  # include <AP_Winch/AP_Winch.h>
 #endif
-#if RPM_ENABLED == ENABLED
- #include <AP_RPM/AP_RPM.h>
-#endif
+#include <AP_RPM/AP_RPM.h>
 
 #if AP_SCRIPTING_ENABLED
 #include <AP_Scripting/AP_Scripting.h>
@@ -302,7 +300,7 @@ private:
         bool reset_target;          // true if target should be reset because of change in surface being tracked
     } surface_tracking;
 
-#if RPM_ENABLED == ENABLED
+#if AP_RPM_ENABLED
     AP_RPM rpm_sensor;
 #endif
 
@@ -489,7 +487,7 @@ private:
     bool auto_trim_started = false;
 
     // Camera
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     AP_Camera camera{MASK_LOG_CAMERA};
 #endif
 
@@ -503,7 +501,7 @@ private:
 #endif
 
     // Rally library
-#if AC_RALLY == ENABLED
+#if HAL_RALLY_ENABLED
     AP_Rally_Copter rally;
 #endif
 

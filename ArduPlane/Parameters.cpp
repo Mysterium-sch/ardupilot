@@ -71,7 +71,7 @@ const AP_Param::Info Plane::var_info[] = {
     // @Param: KFF_THR2PTCH
     // @DisplayName: Throttle to Pitch Mix
     // @Description: Pitch up to add in proportion to throttle. 100% throttle will add this number of degrees to the pitch target.
-    // @Range: 0 5
+    // @Range: -5 5
     // @Increment: 0.01
     // @User: Advanced
     GSCALAR(kff_throttle_to_pitch,  "KFF_THR2PTCH",   0),
@@ -193,7 +193,7 @@ const AP_Param::Info Plane::var_info[] = {
 
     // @Param: LEVEL_ROLL_LIMIT
     // @DisplayName: Level flight roll limit
-    // @Description: This controls the maximum bank angle in degrees during flight modes where level flight is desired, such as in the final stages of landing, and during auto takeoff. This should be a small angle (such as 5 degrees) to prevent a wing hitting the runway during takeoff or landing. Setting this to zero will completely disable heading hold on auto takeoff and final landing approach.
+    // @Description: This controls the maximum bank angle in degrees during flight modes where level flight is desired, such as in the final stages of landing, and during auto takeoff. This should be a small angle (such as 5 degrees) to prevent a wing hitting the runway during takeoff or landing. Setting this to zero will completely disable heading hold on auto takeoff while below 5 meters and during the flare portion of a final landing approach.
     // @Units: deg
     // @Range: 0 45
     // @Increment: 1
@@ -445,8 +445,7 @@ const AP_Param::Info Plane::var_info[] = {
     // @Param: FLTMODE_CH
     // @DisplayName: Flightmode channel
     // @Description: RC Channel to use for flight mode control
-    // @Range: 1 16
-    // @Increment: 1
+    // @Values: 0:Disabled,1:Channel 1,2:Channel 2,3:Channel 3,4:Channel 4,5:Channel 5,6:Channel 6,7:Channel 7,8:Channel 8,9:Channel 9,10:Channel 10,11:Channel 11,12:Channel 12,13:Channel 13,14:Channel 14,15:Channel 15,16:Channel 16
     // @User: Advanced
     GSCALAR(flight_mode_channel,    "FLTMODE_CH",     FLIGHT_MODE_CHANNEL),
 
@@ -663,7 +662,7 @@ const AP_Param::Info Plane::var_info[] = {
 
     // @Param: ALT_HOLD_FBWCM
     // @DisplayName: Minimum altitude for FBWB mode
-    // @Description: This is the minimum altitude in centimeters that FBWB and CRUISE modes will allow. If you attempt to descend below this altitude then the plane will level off. A value of zero means no limit.
+    // @Description: This is the minimum altitude in centimeters (above home) that FBWB and CRUISE modes will allow. If you attempt to descend below this altitude then the plane will level off. A value of zero means no limit.
     // @Units: cm
     // @User: Standard
     GSCALAR(FBWB_min_altitude_cm,   "ALT_HOLD_FBWCM", ALT_HOLD_FBW_CM),
@@ -747,7 +746,7 @@ const AP_Param::Info Plane::var_info[] = {
     // @Path: ../libraries/AP_GPS/AP_GPS.cpp
     GOBJECT(gps, "GPS", AP_GPS),
 
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     // @Group: CAM_
     // @Path: ../libraries/AP_Camera/AP_Camera.cpp
     GOBJECT(camera,                  "CAM_", AP_Camera),
@@ -962,10 +961,12 @@ const AP_Param::Info Plane::var_info[] = {
     GOBJECTN(ahrs.EKF3, NavEKF3, "EK3_", NavEKF3),
 #endif
 
+#if AP_RPM_ENABLED
     // @Group: RPM
     // @Path: ../libraries/AP_RPM/AP_RPM.cpp
     GOBJECT(rpm_sensor, "RPM", AP_RPM),
-    
+#endif
+
     // @Group: RSSI_
     // @Path: ../libraries/AP_RSSI/AP_RSSI.cpp
     GOBJECT(rssi, "RSSI_",  AP_RSSI),
@@ -1069,7 +1070,7 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("HOME_RESET_ALT", 11, ParametersG2, home_reset_threshold, 0),
 
-#if GRIPPER_ENABLED == ENABLED
+#if AP_GRIPPER_ENABLED
     // @Group: GRIP_
     // @Path: ../libraries/AP_Gripper/AP_Gripper.cpp
     AP_SUBGROUPINFO(gripper, "GRIP_", 12, ParametersG2, AP_Gripper),

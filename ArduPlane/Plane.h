@@ -80,7 +80,6 @@
 #include <AP_Parachute/AP_Parachute.h>
 #include <AP_ADSB/AP_ADSB.h>
 #include <AP_ICEngine/AP_ICEngine.h>
-#include <AP_Gripper/AP_Gripper.h>
 #include <AP_Landing/AP_Landing.h>
 #include <AP_LandingGear/AP_LandingGear.h>     // Landing Gear library
 #include <AP_Follow/AP_Follow.h>
@@ -194,7 +193,9 @@ private:
 
     AP_Vehicle::FixedWing::Rangefinder_State rangefinder_state;
 
+#if AP_RPM_ENABLED
     AP_RPM rpm_sensor;
+#endif
 
     AP_TECS TECS_controller{ahrs, aparm, landing, MASK_LOG_TECS};
     AP_L1_Control L1_controller{ahrs, &TECS_controller};
@@ -234,7 +235,7 @@ private:
     AP_Navigation *nav_controller = &L1_controller;
 
     // Camera
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     AP_Camera camera{MASK_LOG_CAMERA};
 #endif
 
@@ -832,7 +833,7 @@ private:
     void set_target_altitude_proportion(const Location &loc, float proportion);
     void constrain_target_altitude_location(const Location &loc1, const Location &loc2);
     int32_t calc_altitude_error_cm(void);
-    void check_fbwb_minimum_altitude(void);
+    void check_fbwb_altitude(void);
     void reset_offset_altitude(void);
     void set_offset_altitude_location(const Location &start_loc, const Location &destination_loc);
     bool above_location_current(const Location &loc);
@@ -983,9 +984,7 @@ private:
 
     // ArduPlane.cpp
     void disarm_if_autoland_complete();
-# if OSD_ENABLED
     void get_osd_roll_pitch_rad(float &roll, float &pitch) const override;
-#endif
     float tecs_hgt_afe(void);
     void efi_update(void);
     void get_scheduler_tasks(const AP_Scheduler::Task *&tasks,
@@ -1204,6 +1203,9 @@ private:
 
     // mode reason for entering previous mode
     ModeReason previous_mode_reason = ModeReason::UNKNOWN;
+
+    // last target alt we passed to tecs
+    int32_t tecs_target_alt_cm;
 
 public:
     void failsafe_check(void);

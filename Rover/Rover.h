@@ -129,8 +129,10 @@ private:
     AP_Int8 *modes;
     const uint8_t num_modes = 6;
 
+#if AP_RPM_ENABLED
     // AP_RPM Module
     AP_RPM rpm_sensor;
+#endif
 
     // Arming/Disarming management class
     AP_Arming_Rover arming;
@@ -156,7 +158,7 @@ private:
     struct Location current_loc;
 
     // Camera
-#if CAMERA == ENABLED
+#if AP_CAMERA_ENABLED
     AP_Camera camera{MASK_LOG_CAMERA};
 #endif
 
