@@ -67,6 +67,9 @@ class AutoTestCopter(AutoTest):
     def test_filepath(self):
         return os.path.realpath(__file__)
 
+    def default_speedup(self):
+        return 100
+
     def set_current_test_name(self, name):
         self.current_test_name_directory = "ArduCopter_Tests/" + name + "/"
 
@@ -9097,9 +9100,9 @@ class AutoTestCopter(AutoTest):
             Test(self.DynamicRpmNotches, attempts=8),
             self.RefindGPS,
             Test(self.GyroFFT, attempts=8),
-            Test(self.GyroFFTHarmonic, attempts=8),
+            Test(self.GyroFFTHarmonic, attempts=16, speedup=8),
             self.GyroFFTAverage,
-            Test(self.GyroFFTContinuousAveraging, attempts=8),
+            Test(self.GyroFFTContinuousAveraging, attempts=8, speedup=8),
             self.CompassReordering,
             self.CRSF,
             self.MotorTest,
