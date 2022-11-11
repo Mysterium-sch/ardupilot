@@ -165,7 +165,7 @@ public:
 private:
 
     // key aircraft parameters passed to multiple libraries
-    AP_Vehicle::FixedWing aparm;
+    AP_FixedWing aparm;
 
     // Global parameters are all contained within the 'g' and 'g2' classes.
     Parameters g;
@@ -191,7 +191,7 @@ private:
     // flight modes convenience array
     AP_Int8 *flight_modes = &g.flight_mode1;
 
-    AP_Vehicle::FixedWing::Rangefinder_State rangefinder_state;
+    AP_FixedWing::Rangefinder_State rangefinder_state;
 
 #if AP_RPM_ENABLED
     AP_RPM rpm_sensor;
@@ -398,6 +398,10 @@ private:
         bool locked_pitch;
         float locked_roll_err;
         int32_t locked_pitch_cd;
+        Quaternion q;
+        bool roll_active_last;
+        bool pitch_active_last;
+        bool yaw_active_last;
     } acro_state;
 
     struct {
@@ -557,7 +561,7 @@ private:
 #if LANDING_GEAR_ENABLED == ENABLED
     // landing gear state
     struct {
-        AP_Vehicle::FixedWing::FlightStage last_flight_stage;
+        AP_FixedWing::FlightStage last_flight_stage;
     } gear;
 #endif
 
@@ -590,7 +594,7 @@ private:
     int8_t  throttle_watt_limit_min; // for reverse thrust
     uint32_t throttle_watt_limit_timer_ms;
 
-    AP_Vehicle::FixedWing::FlightStage flight_stage = AP_Vehicle::FixedWing::FLIGHT_NORMAL;
+    AP_FixedWing::FlightStage flight_stage = AP_FixedWing::FlightStage::NORMAL;
 
     // probability of aircraft is currently in flight. range from 0 to
     // 1 where 1 is 100% sure we're in flight
@@ -860,6 +864,7 @@ private:
     void stabilize_yaw(float speed_scaler);
     void stabilize_training(float speed_scaler);
     void stabilize_acro(float speed_scaler);
+    void stabilize_acro_quaternion(float speed_scaler);
     void calc_nav_yaw_coordinated(float speed_scaler);
     void calc_nav_yaw_course(void);
     void calc_nav_yaw_ground(void);
@@ -1008,7 +1013,7 @@ private:
     void update_control_mode(void);
     void update_fly_forward(void);
     void update_flight_stage();
-    void set_flight_stage(AP_Vehicle::FixedWing::FlightStage fs);
+    void set_flight_stage(AP_FixedWing::FlightStage fs);
 
     // navigation.cpp
     void loiter_angle_reset(void);
@@ -1189,6 +1194,12 @@ private:
         FLARE_DISABLED = 0,
         ENABLED_NO_PITCH_TARGET,
         ENABLED_PITCH_TARGET
+    };
+    
+    enum class AutoTuneAxis {
+        ROLL  = 1U <<0,
+        PITCH = 1U <<1,
+        YAW   = 1U <<2,
     };
 
     FlareMode flare_mode;
